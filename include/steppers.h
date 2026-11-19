@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 
-const int MAX_STEPS_PER_SEC = 35000.0; 
+const int MAX_STEPS_PER_SEC = 25000.0; 
 
 void setup_steppers();
 

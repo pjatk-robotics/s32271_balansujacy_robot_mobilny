@@ -1,45 +1,60 @@
+#include <Arduino.h>
+#include <ESP32Servo.h>
 #include "my_servo.h"
 
-#define MAX_ANGLE 70
+// Zabezpieczenie przed wpisaniem zbyt małego i dużego kąta
+#define MAX_ANGLE_CHANGE 180
 #define MAX_JOYSTICK 512
 
 Servo servo1;
 Servo servo2;
-int targetAngle1 = 50;
-int targetAngle2 = 180 - 50;
-int currentAngle1 = 50;
-int currentAngle2 = 180 - 50;
+
+// Inicjalizacja pozycji (Start od 180 stopni z jednej, 0 z drugiej)
+int targetAngle1 = 180;
+int targetAngle2 = 0;
+int currentAngle1 = 180;
+int currentAngle2 = 0;
+
+// Piny dla ESP32
+const int SERVO1_PIN = 33;
+const int SERVO2_PIN = 19;
 
 void setup_servo()
 {
-    // servo1.attach(5);
-    // servo2.attach(25);
-    // servo1.write(50);
-    //  servo2.write(130);
-
+    // Konfiguracja sprzętowych timerów ESP32 dla sygnału PWM (50 Hz)
+    ESP32PWM::allocateTimer(0);
+    ESP32PWM::allocateTimer(1);
     
+    // Ustawienie standardowych impulsów dla serw (500us - 2400us)
+    servo1.setPeriodHertz(50);
+    servo2.setPeriodHertz(50);
+
+    // Podpięcie pod zadeklarowane piny (D33 i D19)
+    servo1.attach(SERVO1_PIN, 500, 2400);
+    servo2.attach(SERVO2_PIN, 500, 2400);
+
+    // Ustawienie pozycji początkowej
+    servo1.write(currentAngle1);
+    servo2.write(currentAngle2);
 }
 
 void move_servo(int amount)
 {
-        servo1.write(amount);
-     servo2.write(180-amount);
-}
+    // Zabezpieczenie przed wpisaniem skrajnych głupot z klawiatury
+    if (amount < 0) amount = 0;
+    if (amount > MAX_ANGLE_CHANGE) amount = MAX_ANGLE_CHANGE;
 
-void update_servo()
-{
-    int krok = 3;
+    // Serwo 1: Startuje z 180 i maleje (np. 180 - 30 = 150)
+    targetAngle1 = 180 - (amount+5);
+    
+    // Serwo 2 (Lustrzane): Startuje z 0 i rośnie (np. 0 + 30 = 30)
+    targetAngle2 = amount;
 
-    if (currentAngle1 < targetAngle1)
-        currentAngle1 = min(currentAngle1 + krok, targetAngle1);
-    else if (currentAngle1 > targetAngle1)
-        currentAngle1 = max(currentAngle1 - krok, targetAngle1);
-
-    if (currentAngle2 < targetAngle2)
-        currentAngle2 = min(currentAngle2 + krok, targetAngle2);
-    else if (currentAngle2 > targetAngle2)
-        currentAngle2 = max(currentAngle2 - krok, targetAngle2);
-
-    servo1.write(currentAngle1);
-    servo2.write(currentAngle2);
+    // Wykonanie ruchu na serwomechanizmach
+    servo1.write(targetAngle1);
+    servo2.write(targetAngle2);
+    
+    // Zapis aktualnych wartości
+    currentAngle1 = targetAngle1;
+    currentAngle2 = targetAngle2;
 }

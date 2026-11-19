@@ -5,7 +5,7 @@
 #define SERMY_SERVO_HVO_H
 
 void setup_servo();
-void move_servo(int joyR);
+void move_servo(int amount1);
 void update_servo();
 
 #endif
